@@ -2,6 +2,373 @@ import { Article } from "@/types";
 
 export const articles: Article[] = [
   {
+    slug: "nextjs-seo-zero-to-hero",
+    title: "Next.js SEO 제로부터 히어로까지: 프로덕션 체크리스트",
+    description:
+      "metadataBase 설정부터 JSON-LD 구조화 데이터, 캐노니컬 URL, Core Web Vitals, 흔한 실수까지 — Next.js App Router 기반 SEO를 프로덕션 수준으로 완성하는 종합 가이드",
+    category: "nextjs-seo",
+    tags: ["Next.js", "SEO", "JSON-LD", "Core Web Vitals", "메타데이터", "canonical"],
+    createdAt: "2026-03-18",
+    updatedAt: "2026-03-18",
+    content: `## 개요
+
+Next.js App Router의 빌트인 API만으로 프로덕션 수준의 SEO를 구현하는 종합 가이드. 추가 npm 패키지 없이 Next.js가 제공하는 기능만으로 충분하다.
+
+### 핵심 체크리스트 (TL;DR)
+
+- 루트 레이아웃에 \`metadataBase\` 설정 (OG 이미지 상대 경로 문제 방지)
+- \`sitemap.ts\`, \`robots.ts\` 파일 생성
+- \`title.template\` 패턴으로 고유한 페이지 타이틀
+- 모든 페이지에 캐노니컬 URL
+- JSON-LD 구조화 데이터
+- \`next/image\`에 alt 텍스트 + priority 프로퍼티
+- \`next/font\`로 레이아웃 시프트 제거
+
+## SEO 프로젝트 구조
+
+\`\`\`
+app/
+├── layout.tsx          # 루트 레이아웃 (글로벌 메타데이터)
+├── page.tsx            # 홈페이지 (구조화 데이터)
+├── sitemap.ts          # 동적 사이트맵
+├── robots.ts           # robots.txt
+├── manifest.ts         # PWA 매니페스트
+├── blog/
+│   ├── page.tsx        # 블로그 인덱스
+│   └── [slug]/
+│       └── page.tsx    # 동적 블로그 포스트
+lib/
+└── seo.ts              # 재사용 메타데이터 빌더
+\`\`\`
+
+## metadataBase: 가장 먼저 해야 할 설정
+
+\`metadataBase\`는 OG 이미지, 캐노니컬 URL 등의 **상대 경로를 절대 URL로 변환**하는 기준이 된다. 이걸 빠뜨리면 소셜 미디어 카드에서 이미지가 깨진다.
+
+\`\`\`typescript
+// app/layout.tsx
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  metadataBase: new URL("https://yourdomain.com"),
+  title: {
+    default: "사이트 기본 타이틀",
+    template: "%s | 사이트명",  // 하위 페이지: "About | 사이트명"
+  },
+  description: "사이트 설명",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "ko_KR",
+    siteName: "사이트명",
+    images: ["/opengraph-image.png"],  // metadataBase 덕분에 절대 URL로 변환됨
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
+\`\`\`
+
+## 재사용 가능한 메타데이터 빌더
+
+매 페이지마다 메타데이터를 반복 작성하지 말고, **헬퍼 함수**를 만들자:
+
+\`\`\`typescript
+// lib/seo.ts
+import type { Metadata } from "next";
+
+const SITE_URL = "https://yourdomain.com";
+const SITE_NAME = "사이트명";
+
+type BuildMetadataOptions = {
+  title: string;
+  description?: string;
+  path?: string;
+  keywords?: string[];
+  noIndex?: boolean;
+};
+
+export function buildPageMetadata({
+  title,
+  description,
+  path,
+  keywords,
+  noIndex,
+}: BuildMetadataOptions): Metadata {
+  const canonical = path?.startsWith("/") ? path : \`/\${path ?? ""}\`;
+
+  return {
+    title,
+    description,
+    keywords,
+    alternates: { canonical },
+    openGraph: {
+      type: "website",
+      siteName: SITE_NAME,
+      title,
+      description,
+      url: \`\${SITE_URL}\${canonical}\`,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+    ...(typeof noIndex === "boolean" && {
+      robots: { index: !noIndex, follow: !noIndex },
+    }),
+  };
+}
+\`\`\`
+
+### 사용법
+
+\`\`\`typescript
+// app/blog/page.tsx
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  title: "블로그",
+  description: "웹 개발과 SEO에 대한 인사이트",
+  path: "/blog",
+  keywords: ["Next.js", "SEO", "웹 개발"],
+});
+\`\`\`
+
+## 사이트맵 우선순위 전략
+
+\`\`\`typescript
+// app/sitemap.ts
+import { MetadataRoute } from "next";
+
+export default function sitemap(): MetadataRoute.Sitemap {
+  const baseUrl = "https://yourdomain.com";
+  const posts = getAllPosts();
+
+  return [
+    { url: baseUrl, priority: 1.0, changeFrequency: "monthly" },           // 홈: 최고 우선순위
+    { url: \`\${baseUrl}/blog\`, priority: 0.8, changeFrequency: "weekly" },   // 콘텐츠 허브
+    ...posts.map((post) => ({
+      url: \`\${baseUrl}/blog/\${post.slug}\`,
+      lastModified: new Date(post.date),
+      priority: 0.7,                                                         // 개별 콘텐츠
+      changeFrequency: "monthly" as const,
+    })),
+  ];
+}
+\`\`\`
+
+### 우선순위 가이드
+
+| 우선순위 | 대상 |
+|---------|------|
+| **1.0** | 홈페이지 |
+| **0.8** | 콘텐츠 허브 (블로그 인덱스 등) |
+| **0.7** | 개별 콘텐츠 (블로그 포스트) |
+| **0.6** | 보조 페이지 (소개, 경력 등) |
+
+## JSON-LD 구조화 데이터
+
+검색 결과에 **리치 스니펫**을 표시하려면 JSON-LD가 필수다.
+
+### Article 스키마 예시
+
+\`\`\`typescript
+function generateArticleJsonLd(post: {
+  title: string;
+  description: string;
+  date: string;
+  slug: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: post.title,
+    description: post.description,
+    datePublished: post.date,
+    dateModified: post.date,
+    author: {
+      "@type": "Person",
+      name: "작성자명",
+      url: "https://yourdomain.com",
+    },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": \`https://yourdomain.com/blog/\${post.slug}\`,
+    },
+  };
+}
+\`\`\`
+
+### 보안 주의: XSS 방지
+
+JSON-LD를 \`dangerouslySetInnerHTML\`로 삽입할 때 반드시 \`<\` 문자를 이스케이프해야 한다:
+
+\`\`\`typescript
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+    __html: JSON.stringify(jsonLd).replace(/</g, "\\\\u003c"),
+  }}
+/>
+\`\`\`
+
+이렇게 안 하면 악의적 콘텐츠가 \`</script>\` 태그를 삽입해 XSS 공격이 가능해진다.
+
+## Core Web Vitals & 성능
+
+| 메트릭 | 측정 대상 | 좋은 점수 | Next.js 해법 |
+|--------|---------|----------|-------------|
+| **LCP** | 로딩 성능 | ≤ 2.5초 | \`next/image\` + \`priority\`, 정적 생성 |
+| **INP** | 반응성 | ≤ 200ms | 서버 컴포넌트, 최소한의 클라이언트 JS |
+| **CLS** | 시각적 안정성 | ≤ 0.1 | \`next/font\`, \`next/image\`에 크기 지정 |
+
+### 이미지 최적화 핵심
+
+\`\`\`typescript
+import Image from "next/image";
+
+// 히어로 이미지 (above the fold) — LCP 최적화
+<Image
+  src="/hero.jpg"
+  alt="상세한 설명 텍스트"
+  width={1200}
+  height={630}
+  priority  // 프리로드로 LCP 개선
+/>
+
+// 아래쪽 이미지 — 자동 레이지 로드
+<Image
+  src={post.coverImage}
+  alt={\`\${post.title} 커버 이미지\`}
+  width={800}
+  height={400}
+/>
+\`\`\`
+
+| 프로퍼티 | SEO 영향 | 사용 시점 |
+|---------|---------|---------|
+| \`alt\` | 이미지 검색 순위에 **직접 영향** | 의미 있는 이미지에 항상 |
+| \`priority\` | LCP 점수 개선 | above-the-fold 이미지 |
+| \`width\` + \`height\` | CLS 방지 | 항상 지정 |
+| \`sizes\` | 대역폭 최적화 | 반응형 그리드 레이아웃 |
+
+> 장식용 이미지는 \`alt=""\`로 설정해 스크린 리더가 건너뛰게 한다.
+
+### 폰트 최적화
+
+\`\`\`typescript
+import { Geist } from "next/font/google";
+
+const font = Geist({
+  variable: "--font-sans",
+  subsets: ["latin"],
+  display: "swap",  // 폰트 로딩 중 텍스트가 보이지 않는 문제 방지
+});
+\`\`\`
+
+## Next.js SEO 흔한 실수 7가지
+
+### 1. metadataBase 누락
+
+\`\`\`typescript
+// 잘못됨 — OG 이미지가 상대 경로로 남아 소셜 카드에서 깨짐
+openGraph: { images: ["/og-image.png"] }
+
+// 올바름 — 루트 레이아웃에 metadataBase 설정
+metadataBase: new URL("https://yourdomain.com"),
+openGraph: { images: ["/og-image.png"] }  // → https://yourdomain.com/og-image.png
+\`\`\`
+
+### 2. 모든 페이지에서 동일한 타이틀
+
+Google Search Console에서 "중복 타이틀 태그" 경고가 뜬다. \`title.template\`을 활용하자.
+
+### 3. 이미지 alt 텍스트 누락/부실
+
+\`\`\`typescript
+// 나쁜 예
+<Image src={photo} alt="image" />
+<Image src={photo} alt="photo.jpg" />
+
+// 좋은 예
+<Image src={photo} alt="스프린트 플래닝 중 화이트보드 앞에서 협업하는 팀" />
+\`\`\`
+
+### 4. 캐노니컬 URL 미설정
+
+\`yoursite.com/blog/post\`와 \`yoursite.com/blog/post?utm_source=twitter\`가 **별개의 페이지로 인덱싱**되어 랭킹이 분산된다.
+
+\`\`\`typescript
+alternates: { canonical: "/blog/post" }
+\`\`\`
+
+### 5. 클라이언트 사이드에서만 콘텐츠 렌더링
+
+\`useEffect\`로 fetch하는 콘텐츠는 **크롤러가 볼 수 없다**. 서버 컴포넌트에서 데이터를 가져와야 한다.
+
+\`\`\`typescript
+// 잘못됨 — 크롤러에게 빈 페이지
+const [data, setData] = useState(null);
+useEffect(() => { fetch("/api/content").then(r => r.json()).then(setData) }, []);
+
+// 올바름 — 서버에서 렌더링되어 크롤러가 내용을 볼 수 있음
+export default async function Page() {
+  const data = await getContent();
+  return <div>{data.content}</div>;
+}
+\`\`\`
+
+### 6. robots.txt에서 /_next/ 차단
+
+\`\`\`
+# 절대 하면 안 됨!
+Disallow: /_next/
+\`\`\`
+
+Googlebot은 페이지를 렌더링하기 위해 \`/_next/\` 안의 JS 파일이 필요하다. 차단하면 빈 페이지가 인덱싱된다.
+
+### 7. JSON-LD에서 \`<\` 이스케이프 누락
+
+\`JSON.stringify(jsonLd)\`만 하면 XSS 취약점이 생긴다. 반드시 \`.replace(/</g, "\\\\u003c")\`를 추가하자.
+
+## SEO 테스트 도구 모음
+
+| 도구 | 용도 |
+|------|------|
+| Google Rich Results Test | JSON-LD 구조화 데이터 검증 |
+| Schema Markup Validator | 스키마 마크업 추가 검증 |
+| Facebook Sharing Debugger | OG 카드 미리보기 & 디버깅 |
+| opengraph.xyz | Twitter/Facebook/LinkedIn 카드 미리보기 |
+| Google Search Console | 인덱싱 모니터링, 사이트맵 제출 |
+| PageSpeed Insights | Core Web Vitals 실측 |
+| Lighthouse | SEO/성능/접근성 종합 감사 (Chrome DevTools) |
+
+> 소셜 플랫폼은 OG 태그를 **공격적으로 캐싱**한다. 태그를 수정한 후에는 반드시 디버거 도구에서 "다시 스크랩"을 눌러야 반영된다.
+
+## 배포 전 SEO 감사 체크리스트
+
+- [ ] \`metadataBase\` 설정됨
+- [ ] \`title.template\`으로 일관된 브랜딩
+- [ ] 모든 페이지에 OpenGraph + Twitter 카드
+- [ ] 모든 페이지에 캐노니컬 URL
+- [ ] 동적 사이트맵 (모든 라우트 포함)
+- [ ] robots.txt에서 크롤러 허용
+- [ ] JSON-LD 구조화 데이터 (Article, WebSite 등)
+- [ ] 모든 이미지에 적절한 alt 텍스트
+- [ ] 시맨틱 HTML (\`<main>\`, \`<article>\`, \`<nav>\`)
+- [ ] \`<html>\` 태그에 \`lang\` 속성
+- [ ] \`next/font\`로 CLS 방지
+- [ ] 외부 링크에 \`rel="noopener noreferrer"\`
+`,
+  },
+  {
     slug: "nextjs-metadata-og-images-guide",
     title: "Next.js 메타데이터 & OG 이미지 완벽 가이드 (공식 문서 정리)",
     description:
