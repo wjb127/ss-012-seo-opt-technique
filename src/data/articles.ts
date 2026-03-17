@@ -2,6 +2,204 @@ import { Article } from "@/types";
 
 export const articles: Article[] = [
   {
+    slug: "naver-javascript-seo-guide",
+    title: "네이버 자바스크립트 검색 최적화 가이드 (서치어드바이저 정리)",
+    description:
+      "네이버 서치어드바이저 공식 가이드 정리. SPA 사이트의 네이버 검색 최적화, robots.txt 설정, fragment URL 금지, 렌더링 프로세스, SSR 권장 사항까지.",
+    category: "local-seo",
+    tags: ["네이버", "JavaScript", "SPA", "SSR", "검색로봇", "서치어드바이저"],
+    createdAt: "2026-03-18",
+    updatedAt: "2026-03-18",
+    content: `## 개요
+
+네이버 서치어드바이저의 자바스크립트 검색 최적화 공식 가이드를 정리한 글이다. Angular, React, Vue.js 등 SPA 프레임워크로 구축된 사이트가 **네이버 검색에서 제대로 인덱싱**되도록 하는 방법을 다룬다.
+
+> SPA 사이트라도 HTML의 주요 영역 생성은 검색로봇이 잘 인식할 수 있도록 **서버에서 렌더링(SSR)**을 처리하는 것을 권장한다.
+
+## 네이버 검색로봇의 JavaScript 처리 방식
+
+네이버도 SPA 기반 사이트의 수집 및 색인을 지원한다. 하지만 JavaScript가 웹 페이지 구조를 결정하는 SPA 특성상, 전통적인 HTML 해석보다 **몇 배 이상의 리소스가 필요**하다.
+
+### 핵심 원칙
+
+- 네이버 검색로봇은 JavaScript의 영향도를 측정하고 해석한다
+- 하지만 리소스가 많이 드는 작업이므로 **SSR을 강력 권장**
+- Next.js의 서버 컴포넌트, \`generateStaticParams\` 등은 이 문제를 자연스럽게 해결
+
+## JavaScript/CSS 수집 허용 확인
+
+간혹 웹 페이지는 수집을 허용하면서 **JavaScript/CSS 리소스는 차단**하는 경우가 있다:
+
+\`\`\`
+# 잘못된 설정 — JS/CSS가 차단되어 렌더링 불가
+User-agent: *
+Allow: /your-html-url
+Disallow: /your-javascript-url
+Disallow: /your-css-url
+\`\`\`
+
+이렇게 되면 검색로봇이 HTML을 수집해도 **정확한 렌더링이 불가능**하여 혼란이 생긴다.
+
+### 올바른 설정
+
+\`\`\`
+# 방법 1: JS/CSS 명시적 허용
+User-agent: *
+Allow: /your-javascript-url
+Allow: /your-css-url
+
+# 방법 2: 별도 지정하지 않음 (기본 허용)
+User-agent: *
+Allow: /
+\`\`\`
+
+### 네이버 검색로봇 User-Agent
+
+네이버 검색로봇이 JavaScript 등 보조 리소스를 수집할 때 **Yeti** 문자열이 포함된 User-Agent를 사용한다:
+
+\`\`\`
+Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+(KHTML, like Gecko; compatible; Yeti/1.1; +https://naver.me/spd)
+Chrome/W.X.Y.Z Safari/537.36
+\`\`\`
+
+> 구체적 버전은 수시로 변경될 수 있다.
+
+## Fragment (#) URL 사용 금지
+
+네이버 검색로봇은 URL 해석 시 **fragment 부분을 제거**한다.
+
+\`\`\`
+# 검색로봇이 보는 URL
+https://www.mysite.com/page#subsection-1  →  https://www.mysite.com/page
+https://www.mysite.com/page#subsection-2  →  https://www.mysite.com/page
+\`\`\`
+
+두 URL이 동일한 페이지로 처리되므로, 각각 독립적인 콘텐츠를 가진다면 **반드시 permalink로 변경**해야 한다.
+
+### fragment URL → permalink 변환 예시
+
+| 변경 전 (fragment) | 변경 후 (permalink) |
+|-------------------|-------------------|
+| \`https://mysite.com/#home\` | \`https://mysite.com/home\` |
+| \`https://mysite.com/#product\` | \`https://mysite.com/product\` |
+| \`https://mysite.com/path/to/#!/faq-1\` | \`https://mysite.com/path/to/faq-1\` |
+| \`https://mysite.com/path/to/#!/faq-2\` | \`https://mysite.com/path/to/faq-2\` |
+
+> Next.js App Router를 사용하면 디렉토리 기반 라우팅으로 자연스럽게 permalink가 생성된다.
+
+## 네이버 검색로봇의 렌더링 프로세스
+
+네이버 검색로봇의 JavaScript 페이지 처리 과정을 단계별로 정리하면:
+
+### 1단계: 정적 HTML 우선 수집
+
+JavaScript가 동적으로 HTML을 처리하는 페이지를 발견하면:
+- 페이지에 포함된 **JavaScript 리소스가 수집되어 있는지** 체크
+- 수집되어 있지 않으면 **정적 HTML 내용을 먼저 수집/분석하여 색인 처리**
+
+### 2단계: JavaScript 리소스 별도 수집
+
+- HTML에 포함된 JavaScript 리소스는 **별도의 수집 과정**을 거침
+- 렌더링 서버에 **일정 기간 저장**됨
+
+### 3단계: 재방문 시 렌더링
+
+- 검색로봇이 해당 페이지를 **재방문**할 때 확보된 JavaScript가 있으면
+- 해당 스크립트를 포함하여 **HTML을 렌더링**해 보다 정확하게 내용 분석 시도
+
+### 4단계: 색인 업데이트 결정
+
+- 렌더링 결과 **주요 콘텐츠 내용이 변경**되어 있는지 파악
+- 변경이 확인되면 **색인 업데이트**
+
+### 중요한 주의사항
+
+JavaScript URL에 **timestamp나 hash 값**을 넣어 리소스 최신성을 강제 처리하는 경우가 있다:
+
+\`\`\`html
+<!-- 권장하지 않음 — 매번 다른 URL로 인식되어 수집 문제 발생 -->
+<script src="/app.js?v=1710744000"></script>
+<script src="/app.abc123def.js"></script>
+\`\`\`
+
+이 경우 수집 과정에서 페이지 콘텐츠 해석에 **문제가 발생할 수 있으므로 권장하지 않는다**.
+
+> Next.js는 빌드 시 자동으로 청크 해싱을 하지만, 네이버 검색로봇은 이를 처리할 수 있도록 설계되어 있다. 다만 직접 JS URL에 동적 파라미터를 넣는 것은 피하자.
+
+## SPA 사이트는 검색에서 배제되나?
+
+**아니다.** 단순히 SPA 기반이라고 검색에 노출되지 않는 것은 아니다. 다만:
+
+- 네이버 검색로봇은 **"수집 우선순위"**를 결정하는 과정이 존재
+- 할당되는 수집 리소스는 **제한적**이므로 중요한 URL을 선정하여 수집
+- 수집이 되었더라도 **색인 및 검색 노출을 보장하지는 않음**
+
+### SSR을 권장하는 이유
+
+| 렌더링 방식 | 네이버 검색 영향 |
+|------------|----------------|
+| **SSR / SSG** | 정적 HTML로 즉시 콘텐츠 인식 → 빠르고 확실한 색인 |
+| **CSR (JavaScript only)** | 별도 수집/렌더링 과정 필요 → 색인 지연, 누락 가능성 |
+
+## Next.js에서의 실전 적용
+
+### App Router의 서버 컴포넌트 활용
+
+\`\`\`typescript
+// 서버 컴포넌트 — HTML이 서버에서 렌더링되어 검색로봇이 즉시 인식
+export default async function ProductPage({ params }) {
+  const product = await getProduct((await params).id);
+
+  return (
+    <article>
+      <h1>{product.name}</h1>
+      <p>{product.description}</p>
+    </article>
+  );
+}
+\`\`\`
+
+### 정적 생성으로 최적화
+
+\`\`\`typescript
+// 빌드 타임에 모든 페이지를 HTML로 미리 생성
+export function generateStaticParams() {
+  return products.map((p) => ({ id: p.id }));
+}
+\`\`\`
+
+### robots.txt에서 리소스 접근 허용
+
+\`\`\`typescript
+// app/robots.ts
+import { MetadataRoute } from "next";
+
+export default function robots(): MetadataRoute.Robots {
+  return {
+    rules: {
+      userAgent: "*",
+      allow: "/",
+      // /_next/ 등 JS/CSS 리소스를 차단하면 안 됨!
+    },
+    sitemap: "https://yourdomain.com/sitemap.xml",
+  };
+}
+\`\`\`
+
+## 핵심 요약
+
+| 항목 | 권장사항 |
+|------|---------|
+| **렌더링** | SSR/SSG 강력 권장, CSR만 사용 시 색인 지연 |
+| **robots.txt** | JS/CSS 리소스 수집 차단 금지 |
+| **URL 구조** | fragment(#) URL 금지, permalink 사용 |
+| **JS 리소스 URL** | timestamp/hash 파라미터 동적 삽입 금지 |
+| **검색 노출** | SPA라고 배제되지는 않지만 보장도 안 됨 |
+| **네이버 로봇** | User-Agent에 Yeti 문자열 포함 |
+`,
+  },
+  {
     slug: "google-seo-for-developers",
     title: "Google 검색 시작하기: 개발자 가이드 (공식 문서 정리)",
     description:
