@@ -2,6 +2,284 @@ import { Article } from "@/types";
 
 export const articles: Article[] = [
   {
+    slug: "nextjs-seo-playbook-vercel",
+    title: "Next.js SEO 플레이북 (Vercel 공식 블로그 정리)",
+    description:
+      "Vercel 공식 블로그의 Next.js SEO 플레이북을 한국어로 정리. 렌더링 전략, 속도 최적화, 콘텐츠 전략, 동적 메타데이터, 네비게이션, 국제화까지 총정리.",
+    category: "nextjs-seo",
+    tags: ["Next.js", "Vercel", "SEO", "ISR", "렌더링", "국제화"],
+    createdAt: "2026-03-18",
+    updatedAt: "2026-03-18",
+    content: `## 개요
+
+Vercel 공식 블로그에서 발행한 Next.js SEO 플레이북을 한국어로 정리한 글이다. SEO를 신비로운 과정이 아닌 **체계적인 접근법**으로 다루며, Next.js + Vercel 조합에서 활용할 수 있는 모든 SEO 전략을 포괄한다.
+
+## 1. 렌더링 전략이 SEO에 미치는 영향
+
+검색 엔진은 **소스 코드**를 크롤링한다. 클라이언트 사이드 JavaScript로만 렌더링된 콘텐츠는 크롤링에 더 오래 걸리거나 아예 인덱싱되지 않을 수 있다.
+
+### 렌더링 방식 비교
+
+| 방식 | 특징 | SEO 영향 |
+|------|------|---------|
+| **CSR** (클라이언트 사이드) | 브라우저에서 JS 실행 후 렌더링 | 크롤러가 빈 페이지를 볼 수 있음 |
+| **SSR** (서버 사이드) | 요청마다 서버에서 렌더링 | 크롤러에 완전한 HTML 제공, 서버 부하 존재 |
+| **SSG** (정적 생성) | 빌드 타임에 HTML 생성 | 가장 빠른 로딩, 대규모 사이트에서 빌드 시간 문제 |
+| **ISR** (점진적 정적 재생성) | SSG + 특정 페이지만 필요시 업데이트 | SSG의 빠른 속도 + SSR의 유연성 |
+
+### 핵심 포인트
+
+**ISR이 SEO에 가장 유리한 선택지**인 경우가 많다. SSG처럼 모든 페이지를 프리렌더링하면서, 콘텐츠가 변경된 페이지만 선택적으로 재생성할 수 있기 때문이다.
+
+\`\`\`typescript
+// ISR 예시 — 60초마다 페이지 재생성
+export const revalidate = 60;
+
+export default async function Page() {
+  const data = await fetchData();
+  return <div>{data.content}</div>;
+}
+\`\`\`
+
+## 2. 속도 최적화
+
+사이트 속도는 SEO에 **직접적인 영향**을 미친다. Google은 사이트 속도를 순위 요소로 사용하며, 빠른 사이트는 사용자 참여도와 전환율도 높다.
+
+### 속도가 영향을 미치는 3가지 영역
+
+1. **사용자 경험**: 빠른 사이트 = 높은 참여도 = 높은 전환율
+2. **검색 엔진 순위**: Google이 속도를 강력한 순위 신호로 사용
+3. **모바일 최적화**: 대부분의 트래픽이 모바일, Google은 모바일 우선 크롤링
+
+### Next.js 내장 최적화 도구
+
+#### next/image
+
+디바이스별 이미지 자동 최적화. 최소한의 추가 JavaScript만 로드한다.
+
+\`\`\`typescript
+import Image from "next/image";
+
+<Image
+  src="/hero.jpg"
+  alt="히어로 배너 설명"
+  width={1200}
+  height={630}
+  priority  // above-the-fold 이미지는 프리로드
+/>
+\`\`\`
+
+#### Dynamic Imports
+
+**컴포넌트 단위**까지 스크립트 지연 로딩이 가능하다:
+
+\`\`\`typescript
+import dynamic from "next/dynamic";
+
+// 사용자가 필요할 때만 로드
+const HeavyChart = dynamic(() => import("@/components/Chart"), {
+  loading: () => <p>로딩 중...</p>,
+});
+\`\`\`
+
+#### 자동 웹폰트 최적화
+
+Next.js는 불필요한 외부 요청을 제거하고, 폰트를 자체 호스팅하여 렌더링 블로킹을 최소화한다.
+
+#### 반응형 디자인
+
+별도의 AMP 버전 없이도 모바일 최적화가 가능하다. Next.js + Tailwind CSS 조합이면 충분하다.
+
+## 3. 콘텐츠 전략
+
+### 구조화된 콘텐츠의 중요성
+
+"헤더만 중요한 게 아니다. **서브헤더, 리스트, 테이블도 모두 중요하다.**"
+
+검색 엔진 크롤러는 시각적 구조를 통해 콘텐츠의 컨텍스트를 파악한다. 시맨틱 HTML을 적극 활용하자:
+
+\`\`\`html
+<article>
+  <h1>메인 제목</h1>
+  <p>도입부...</p>
+
+  <h2>주요 섹션</h2>
+  <p>설명...</p>
+
+  <h3>하위 주제</h3>
+  <ul>
+    <li>포인트 1</li>
+    <li>포인트 2</li>
+  </ul>
+
+  <table>
+    <thead><tr><th>항목</th><th>설명</th></tr></thead>
+    <tbody><tr><td>데이터</td><td>값</td></tr></tbody>
+  </table>
+</article>
+\`\`\`
+
+### Schema.org 구조화 데이터
+
+Google의 Structured Data Markup Helper를 활용해 **리치 스니펫**용 JSON-LD를 생성하자. Article, FAQ, HowTo, Product 등 다양한 스키마를 적용할 수 있다.
+
+## 4. 동적 메타데이터 엔지니어링
+
+HTML \`<head>\` 내에 포함해야 할 메타데이터 요소:
+
+| 요소 | 용도 |
+|------|------|
+| **Title** | 검색 결과에 표시되는 페이지 제목 |
+| **Description** | 검색 결과 스니펫에 표시되는 설명 |
+| **Meta tags** | 키워드, robots 지시어 등 |
+| **Open Graph** | 소셜 미디어 공유 시 미리보기 |
+| **Structured Data** | 리치 스니펫용 JSON-LD |
+
+### App Router에서의 메타데이터 관리
+
+App Router를 사용하면 **컴포넌트 단위**에서 동적으로 메타데이터를 생성할 수 있다:
+
+\`\`\`typescript
+// app/blog/[slug]/page.tsx
+export async function generateMetadata({ params }) {
+  const post = await getPost((await params).slug);
+  return {
+    title: post.title,
+    description: post.excerpt,
+    openGraph: {
+      title: post.title,
+      description: post.excerpt,
+      images: [post.ogImage],
+    },
+  };
+}
+\`\`\`
+
+## 5. 스마트 네비게이션 설계
+
+검색 엔진은 **어떤 페이지가 어떤 페이지로 링크하는지**를 기반으로 사이트 구조를 파악한다.
+
+### Next.js 네비게이션 도구
+
+| 도구 | SEO 기여 |
+|------|---------|
+| **App Router** | 디렉토리 기반 라우팅으로 자연스러운 페이지 계층 구조 |
+| **Layouts** | 네비게이션, 푸터 등 반복 요소 중앙 관리 |
+| **Dynamic Segments** | 프로그래밍 방식으로 서브페이지 생성 |
+| **Link 컴포넌트** | 프리페칭 + 클라이언트 사이드 네비게이션 |
+| **useRouter Hook** | 조건부 라우팅 처리 |
+
+### 캐노니컬 URL
+
+유사하거나 중복된 콘텐츠가 있을 경우, **선호하는 버전의 URL**을 명시해야 한다:
+
+\`\`\`typescript
+export const metadata = {
+  alternates: {
+    canonical: "/blog/original-post",
+  },
+};
+\`\`\`
+
+이렇게 하면 \`?utm_source=...\` 같은 쿼리 파라미터가 붙은 URL이 별도 페이지로 인덱싱되는 것을 방지한다.
+
+## 6. 404 페이지 & 에러 처리
+
+### 잘못된 방식
+
+- 404 에러 시 홈페이지로 리다이렉트 (Google이 싫어함)
+- 복잡하고 장황한 에러 페이지
+
+### 올바른 방식
+
+- 명확하고 심플한 404 페이지
+- "이 페이지를 찾을 수 없습니다" 직설적 메시지
+- **인기 콘텐츠 링크** 제공으로 사용자 이탈 방지
+- 필요시 \`noindex\`로 에러 페이지 인덱싱 차단
+
+\`\`\`typescript
+// app/not-found.tsx
+import Link from "next/link";
+
+export default function NotFound() {
+  return (
+    <div>
+      <h1>404 - 페이지를 찾을 수 없습니다</h1>
+      <p>요청하신 페이지가 존재하지 않습니다.</p>
+      <Link href="/">홈으로 돌아가기</Link>
+    </div>
+  );
+}
+\`\`\`
+
+## 7. 국제화 (i18n)와 지역 SEO
+
+### 국제화 프로세스
+
+1. 코드베이스를 다국어 지원 가능하도록 준비
+2. RTL(오른쪽→왼쪽) 등 텍스트 방향성 CSS 지원
+3. Next.js의 i18n 설정으로 자동 로케일 감지
+
+### Next.js i18n 기능
+
+- **자동 로케일 감지**: 브라우저 설정 기반
+- **\`lang\` 속성 자동 추가**: \`<html lang="ko">\`
+- **로케일 간 자연스러운 전환**
+
+### hreflang 태그
+
+다국어 사이트에서 검색 엔진에 언어별 버전을 알려주려면 **수동으로** \`hreflang\` 메타 태그를 추가해야 한다:
+
+\`\`\`typescript
+export const metadata = {
+  alternates: {
+    languages: {
+      "ko": "/ko",
+      "en": "/en",
+      "ja": "/ja",
+    },
+  },
+};
+\`\`\`
+
+### 현지화 팁
+
+- 브라우저 자동 번역에만 의존하지 말 것
+- 문화적, 정치적, 법적 뉘앙스를 고려한 **수동 현지화** 권장
+- 단순 번역이 아닌 해당 문화권에 맞는 콘텐츠 적응 필요
+
+## 8. Vercel 배포 & 모니터링
+
+| 기능 | 설명 |
+|------|------|
+| **Next.js Analytics** | Lighthouse + Core Web Vitals 기반 분석 |
+| **Real Experience Score** | 실제 사용자 기준 사이트 성능 지속 측정 |
+| **Git 워크플로우** | 브랜치 기반 자동 배포 (Preview + Production) |
+| **Preview 배포** | PR마다 고유 URL 생성, 실시간 팀 코멘팅 가능 |
+
+### 실전 워크플로우
+
+1. 기능 브랜치에서 개발
+2. PR 생성 → Preview 배포 자동 생성
+3. Preview에서 SEO 요소 확인 (메타태그, OG 이미지, 구조화 데이터)
+4. 머지 → Production 자동 배포
+5. Analytics에서 Core Web Vitals 모니터링
+
+## 핵심 요약
+
+| 영역 | 전략 |
+|------|------|
+| **렌더링** | ISR로 빠른 속도 + 유연한 업데이트 |
+| **속도** | next/image, Dynamic Import, 웹폰트 최적화 |
+| **콘텐츠** | 시맨틱 HTML + Schema.org 구조화 데이터 |
+| **메타데이터** | App Router의 동적 메타데이터 API 활용 |
+| **네비게이션** | 디렉토리 기반 라우팅 + 캐노니컬 URL |
+| **에러 처리** | 심플한 404 + 인기 콘텐츠 링크 |
+| **국제화** | i18n + hreflang + 문화적 현지화 |
+| **배포** | Vercel Preview 배포로 SEO 사전 검증 |
+`,
+  },
+  {
     slug: "nextjs-seo-zero-to-hero",
     title: "Next.js SEO 제로부터 히어로까지: 프로덕션 체크리스트",
     description:
