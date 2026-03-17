@@ -2,6 +2,283 @@ import { Article } from "@/types";
 
 export const articles: Article[] = [
   {
+    slug: "google-seo-for-developers",
+    title: "Google 검색 시작하기: 개발자 가이드 (공식 문서 정리)",
+    description:
+      "Google 공식 개발자 SEO 가이드 정리. 크롤링 가능한 링크, JavaScript SEO, 텍스트 우선 전략, noindex/robots.txt 차이, 구조화 데이터로 리치 결과 구현까지.",
+    category: "technical-seo",
+    tags: ["Google", "개발자", "JavaScript SEO", "크롤링", "리치결과", "noindex"],
+    createdAt: "2026-03-18",
+    updatedAt: "2026-03-18",
+    content: `## 개요
+
+Google 검색 센터의 개발자용 SEO 시작 가이드를 정리한 글이다. **웹 개발자 관점**에서 Google 검색에 사이트를 최적화하는 실전 방법을 다룬다.
+
+> 검색에 최적화된 콘텐츠를 만들면 관심 있는 사용자를 더 많이 유입할 수 있다.
+
+## 1. Google이 사이트를 인식하는 방법
+
+### 프로세스
+
+1. **Googlebot**(웹 크롤링 봇)이 새로운/업데이트된 페이지를 발견
+2. 페이지를 크롤링하고 렌더링
+3. Google 색인에 포함
+
+### 사용자 뷰 vs Google 뷰
+
+사용자는 브라우저에서 이미지와 텍스트를 볼 수 있지만, **Google이 지원하지 않는 JavaScript 기능**을 사용하면 해당 콘텐츠를 인식하지 못할 수 있다.
+
+### 테스트 도구
+
+- **URL 검사 도구** (Search Console) — Google이 페이지를 어떻게 보는지 확인
+- **리치 결과 테스트** — 구조화 데이터 검증
+
+## 2. 크롤링 가능한 링크 만들기
+
+Googlebot은 **링크, 사이트맵, 리디렉션**을 파싱하여 URL 사이를 이동한다.
+
+### 필수 규칙
+
+#### \`<a>\` 태그를 사용하라
+
+\`\`\`html
+<!-- 올바름 — Google이 크롤링 가능 -->
+<a href="/about">소개 페이지</a>
+
+<!-- 잘못됨 — Google이 따라가지 못할 수 있음 -->
+<div onclick="location.href='/about'">소개 페이지</div>
+<button onclick="navigate('/about')">소개 페이지</button>
+\`\`\`
+
+모든 페이지가 검색 가능한 **다른 페이지의 링크로 연결**되어야 한다. 어디서도 링크되지 않은 페이지는 Google이 발견할 수 없다.
+
+#### 링크 텍스트와 alt 속성
+
+\`\`\`html
+<!-- 좋은 예 — 링크 대상을 명확히 설명 -->
+<a href="/seo-guide">SEO 기본 가이드</a>
+
+<!-- 이미지 링크는 alt 속성 필수 -->
+<a href="/products">
+  <img src="shoes.jpg" alt="운동화 컬렉션">
+</a>
+\`\`\`
+
+#### 사이트맵 제출
+
+사이트맵은 사이트에 있는 **페이지, 동영상, 기타 파일과 각 관계**에 관한 정보를 제공한다. Search Console에서 제출하자.
+
+#### SPA(싱글 페이지 앱) 주의사항
+
+JavaScript 앱에서는 각 화면/개별 콘텐츠마다 **고유 URL**이 있어야 한다. URL이 바뀌지 않으면 Google은 각 콘텐츠를 별개의 페이지로 인식하지 못한다.
+
+\`\`\`
+# SPA에서 고유 URL 필수
+https://example.com/products         → 제품 목록
+https://example.com/products/shoes   → 신발 상세
+https://example.com/about            → 소개
+\`\`\`
+
+## 3. JavaScript SEO
+
+### Google의 JavaScript 처리
+
+Google은 JavaScript를 **실행하지만 제한사항이 존재**한다:
+
+- 일부 JavaScript API를 지원하지 않을 수 있음
+- 렌더링 대기 시간이 추가로 소요됨
+- 크롤링 → 렌더링이 2단계로 분리되어 있음
+
+### 핵심 원칙
+
+페이지 설계 시 **크롤러의 콘텐츠 접근/렌더링 방식**을 항상 고려해야 한다:
+
+1. 중요한 콘텐츠는 **서버 사이드 렌더링** 또는 **정적 생성** 권장
+2. JavaScript로만 렌더링되는 콘텐츠는 색인이 **지연**될 수 있음
+3. Google이 지원하지 않는 JS 기능을 사용하면 **콘텐츠가 보이지 않음**
+
+## 4. 콘텐츠 변경 시 Google에 알리기
+
+### 빠른 크롤링 방법
+
+1. **사이트맵 제출** — 신규/업데이트된 페이지 포함
+2. **URL 재크롤링 요청** — Search Console에서 직접 요청
+
+### 디버깅
+
+색인 생성에 계속 문제가 발생하면 **서버 로그에서 오류를 확인**하자. Googlebot의 접근 실패, 5xx 에러 등이 원인일 수 있다.
+
+## 5. 텍스트 우선 전략
+
+> "Googlebot은 텍스트로 표시되는 콘텐츠만 확인할 수 있다."
+
+### 실전 규칙
+
+#### 시각적 콘텐츠에 텍스트 대안 제공
+
+\`\`\`html
+<!-- 나쁜 예 — 이미지만 나열 -->
+<div class="products">
+  <img src="product1.jpg">
+  <img src="product2.jpg">
+</div>
+
+<!-- 좋은 예 — 텍스트 설명 포함 -->
+<div class="products">
+  <div>
+    <img src="product1.jpg" alt="클래식 가죽 지갑">
+    <h3>클래식 가죽 지갑</h3>
+    <p>수제 이탈리안 가죽으로 만든 슬림 지갑</p>
+  </div>
+</div>
+\`\`\`
+
+#### 모든 페이지에 고유한 제목 + 메타 설명
+
+\`\`\`html
+<head>
+  <title>클래식 가죽 지갑 | 핸드메이드 가죽 제품</title>
+  <meta name="description" content="수제 이탈리안 가죽으로 만든 슬림 지갑. 6개 카드 슬롯과 지폐 수납 공간.">
+</head>
+\`\`\`
+
+고유한 제목과 메타 설명이 있으면 Google이 **페이지와 사용자의 관련성**을 표시하는 데 도움이 된다.
+
+#### 의미론적 HTML 사용
+
+\`\`\`html
+<!-- 좋은 예 — 시맨틱 HTML -->
+<article>
+  <h1>SEO 가이드</h1>
+  <nav>목차</nav>
+  <section>
+    <h2>크롤링이란?</h2>
+    <p>설명...</p>
+  </section>
+</article>
+
+<!-- 피해야 할 것 -->
+<!-- Java, Silverlight 등 플러그인 필요한 콘텐츠 -->
+<!-- Canvas 안에서만 렌더링되는 텍스트 -->
+\`\`\`
+
+#### CSS content 속성 주의
+
+\`\`\`css
+/* Google이 무시할 수 있음 — 장식용으로만 사용 */
+.badge::after {
+  content: "NEW";  /* Google이 이 텍스트를 인식하지 못할 수 있음 */
+}
+\`\`\`
+
+CSS \`content\` 속성으로 추가된 콘텐츠는 Google이 **무시**할 수 있다. 중요한 텍스트는 반드시 **DOM에 직접** 포함하자.
+
+### 색인 가능한 파일 형식
+
+| 가능 | 불가능 |
+|------|--------|
+| HTML | Canvas 렌더링 텍스트 |
+| PDF | 플러그인 기반 콘텐츠 (Java, Silverlight) |
+| 이미지 (alt 텍스트) | CSS content 속성 텍스트 |
+| 동영상 (메타데이터) | |
+
+## 6. 콘텐츠의 다른 버전 알리기
+
+Google은 사이트의 **여러 버전**(모바일/데스크톱, 다국어 등)을 자동으로 인식하지 못한다. 직접 알려줘야 한다.
+
+### 중복 URL 통합
+
+\`\`\`html
+<!-- 정규 URL 지정 -->
+<link rel="canonical" href="https://example.com/original-page">
+\`\`\`
+
+### 다국어/지역별 버전
+
+\`\`\`html
+<link rel="alternate" hreflang="ko" href="https://example.com/ko/page">
+<link rel="alternate" hreflang="en" href="https://example.com/en/page">
+\`\`\`
+
+## 7. 크롤링/색인 제어
+
+### 접근 제한 4가지 방법
+
+| 방법 | 크롤링 | 색인 | 용도 |
+|------|--------|------|------|
+| **로그인 제한** | 차단 | 차단 | 회원 전용 콘텐츠 |
+| **robots.txt** | 차단 | 차단 안 됨 | 크롤링 리소스 절약 |
+| **noindex** | 허용 | 차단 | 검색결과에서 숨기기 |
+| **비밀번호 보호** | 차단 | 차단 | 비공개 페이지 |
+
+### 핵심 차이: robots.txt vs noindex
+
+\`\`\`
+# robots.txt — 크롤링만 차단, 색인은 막지 못함
+# 다른 페이지에서 링크되면 URL이 색인될 수 있음!
+User-agent: *
+Disallow: /private/
+\`\`\`
+
+\`\`\`html
+<!-- noindex — 색인 생성 직접 차단 (크롤링은 허용) -->
+<meta name="robots" content="noindex">
+\`\`\`
+
+> robots.txt는 **검색에서 숨기는 메커니즘이 아니다**. 검색에서 숨기려면 \`noindex\`를 사용하자.
+
+### 규칙 충돌 주의
+
+여러 크롤링/색인 규칙을 함께 사용하면 **충돌**할 수 있다. 예: robots.txt로 차단한 페이지에 noindex를 넣으면 Google이 noindex를 읽을 수 없어 오히려 색인될 수 있다.
+
+## 8. 콘텐츠 미표시 시 디버깅
+
+### 3단계 디버깅 프로세스
+
+1. **URL 검사 도구** — Googlebot이 페이지에 접근 가능한지 확인
+2. **robots.txt 테스트** — 의도치 않은 크롤링 차단이 있는지 확인
+3. **HTML 메타태그 확인** — \`noindex\` 규칙이 잘못 적용되었는지 검증
+
+## 9. 리치 결과 구현
+
+리치 결과란 검색결과에서 **스타일, 이미지, 상호작용 기능**이 추가된 형태다.
+
+### 구현 방법
+
+**구조화된 데이터 마크업**(JSON-LD)을 추가하면 Google이 페이지를 더 잘 이해하고 리치 결과로 표시할 수 있다:
+
+\`\`\`html
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Recipe",
+  "name": "김치찌개",
+  "description": "정통 한국식 김치찌개 레시피",
+  "cookTime": "PT30M",
+  "recipeYield": "4인분",
+  "image": "https://example.com/kimchi-stew.jpg"
+}
+</script>
+\`\`\`
+
+### 사용 가능한 리치 결과 유형
+
+레시피, 이벤트, 채용 공고, FAQ, HowTo, 제품, 리뷰 등 — Google의 **리치 결과 갤러리**에서 사이트에 맞는 유형을 확인하자.
+
+## 핵심 요약
+
+| 영역 | 핵심 조치 |
+|------|----------|
+| **크롤링** | \`<a href>\` 링크 사용, 사이트맵 제출, SPA에 고유 URL |
+| **JavaScript** | SSR/SSG 권장, JS 제한사항 인지 |
+| **콘텐츠** | 텍스트 우선, 시맨틱 HTML, 고유 title + description |
+| **버전 관리** | canonical URL, hreflang 태그 |
+| **접근 제어** | robots.txt ≠ 검색 숨기기, noindex로 색인 차단 |
+| **리치 결과** | JSON-LD 구조화 데이터 마크업 |
+| **디버깅** | URL 검사 → robots.txt → noindex 순서로 확인 |
+`,
+  },
+  {
     slug: "google-seo-maintenance-guide",
     title: "웹사이트 SEO 유지관리 심화 가이드 (Google 공식 문서 정리)",
     description:
