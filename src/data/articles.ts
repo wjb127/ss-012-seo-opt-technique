@@ -2,6 +2,573 @@ import { Article } from "@/types";
 
 export const articles: Article[] = [
   {
+    slug: "naver-resource-link-management",
+    title: "리소스와 링크 관리 (네이버 서치어드바이저 정리)",
+    description:
+      "네이버 서치어드바이저 공식 가이드 정리. robots.txt 리소스 차단 문제, IP 차단 해제, href에 JavaScript 호출 금지, 프로토콜 혼용 주의 등 수집 최적화 요소.",
+    category: "local-seo",
+    tags: ["네이버", "robots.txt", "링크", "리소스", "HTTPS", "서치어드바이저"],
+    createdAt: "2026-03-18",
+    updatedAt: "2026-03-18",
+    content: `## 개요
+
+네이버 서치어드바이저의 "리소스와 링크 관리" 공식 가이드를 정리한 글이다. 네이버 검색로봇의 원활한 사이트 수집을 위한 **최적화 요소**를 안내한다.
+
+## 접근 제한된 리소스 확인
+
+현대 웹 문서는 HTML만으로 구성되지 않는다. 콘텐츠를 표현하는 데 **추가 리소스(JavaScript 등)**가 필수인 경우가 많다.
+
+### 문제 상황
+
+수집 허용된 웹 문서와 달리, 리소스가 **별도 URL 경로**에 존재하는 경우:
+- **robots.txt로 차단**되어 있거나
+- **IP 차단**으로 접근 불가할 수 있다
+
+이 경우 웹 페이지를 제대로 렌더링할 수 없어 **검색결과에 다르게 노출되거나 미노출**될 수 있다.
+
+### robots.txt에 의한 접근 불가 예시
+
+\`\`\`
+A. https://www.your-site.com/              ← 수집 대상 페이지
+B. https://www.your-site.com/resource/1     ← A의 필수 리소스
+C. https://www.your-site.com/temp/c         ← A의 필수 리소스
+\`\`\`
+
+\`\`\`
+# robots.txt — /resource가 차단됨
+User-agent: *
+Allow: /
+Disallow: /resource
+\`\`\`
+
+B URL이 차단되어 있으므로 A URL 콘텐츠가 **불완전한 상태**로 해석된다.
+
+### 해결 방법
+
+1. \`Disallow: /resource\`를 **Allow로 변경**
+2. 또는 B URL 없이도 A URL 콘텐츠가 완전히 구성되도록 **페이지 수정**
+
+### 네이버 검색로봇 IP 차단
+
+네이버 검색로봇 확인 방법 가이드를 통해 검색로봇 IP를 확인하고 **차단 해제**하자.
+
+## \`<a>\` 요소의 href에 JavaScript 호출 금지
+
+네이버 검색로봇은 \`<a>\`의 \`href\` 속성으로 사이트 내 다른 페이지 URL을 발견하고 수집한다.
+
+\`\`\`html
+<!-- 나쁜 예 — 검색로봇이 URL을 발견할 수 없음 -->
+<a href="createLink(1, news)">클릭</a>
+
+<!-- 좋은 예 — 명확한 URL -->
+<a href="https://www.your-site.com/news/1">클릭</a>
+\`\`\`
+
+href에 JavaScript 호출 방식으로 입력하면 정상적인 링크를 구성할 수 없어 **사이트 수집량이 감소**한다.
+
+## 프로토콜 혼용 주의
+
+HTTPS 사이트에서 동일 호스트이지만 **HTTP 프로토콜** 리소스를 링크하는 경우가 있다:
+
+\`\`\`
+# 문제 — 프로토콜 불일치
+페이지: https://www.your-site.com/
+리소스: http://www.your-site.com/resource/1
+
+# 해결 — 동일 프로토콜로 통일
+페이지: https://www.your-site.com/
+리소스: https://www.your-site.com/resource/1
+\`\`\`
+
+URL 프로토콜과 동일한 리소스 URL로 변경하자.
+
+## 핵심 요약
+
+| 항목 | 권장사항 |
+|------|---------|
+| **리소스 접근** | robots.txt에서 JS/CSS 등 필수 리소스 차단 금지 |
+| **IP 차단** | 네이버 검색로봇 IP 차단 해제 |
+| **링크 마크업** | \`<a href="URL">\` 사용, JavaScript 호출 금지 |
+| **프로토콜** | HTTPS로 통일, HTTP/HTTPS 혼용 금지 |
+`,
+  },
+  {
+    slug: "naver-seo-basic-guide",
+    title: "네이버 SEO 기본 가이드: title, description, H1, Alt 최적화",
+    description:
+      "네이버 서치어드바이저 공식 SEO 기본 가이드 정리. title 요소, meta description, H1 태그, Alt 속성 등 검색로봇이 이해하기 쉬운 HTML 구조 작성법.",
+    category: "on-page-seo",
+    tags: ["네이버", "title", "description", "H1", "Alt", "SEO"],
+    createdAt: "2026-03-18",
+    updatedAt: "2026-03-18",
+    content: `## 개요
+
+네이버 서치어드바이저의 SEO 기본 가이드를 정리한 글이다. 네이버 검색로봇도 사용자와 마찬가지로 **검색엔진 최적화(SEO)를 통해 사이트 콘텐츠를 더 잘 이해**할 수 있다.
+
+> SEO가 잘 된 콘텐츠는 네이버 검색로봇의 분석에 용이하며, 검색결과에 더 나은 콘텐츠를 제공하는 데 도움이 된다.
+
+## 1. \`<title>\` 요소
+
+### title 요소 누락
+
+콘텐츠 주제를 나타낼 **정확하고 고유한 제목**을 만들어야 한다. \`<title>\` 요소는 네이버 검색로봇에게 페이지의 주제가 무엇인지 알려준다.
+
+\`\`\`html
+<head>
+  <title>SEO 기본 가이드 - 네이버 서치어드바이저</title>
+</head>
+\`\`\`
+
+### title 요소가 2개 이상
+
+HTML 문서에 \`<title>\`이 2개 이상이면 검색로봇이 **어떤 title이 콘텐츠 주제에 부합하는지 추가 분석**해야 한다. 좋지 못한 페이지로 분류될 수 있다.
+
+\`\`\`html
+<!-- 나쁜 예 — title이 2개 -->
+<head>
+  <title>SEO 가이드</title>
+  <title>검색 최적화</title>
+</head>
+
+<!-- 좋은 예 — title은 1개만 -->
+<head>
+  <title>SEO 기본 가이드 - 네이버 서치어드바이저</title>
+</head>
+\`\`\`
+
+### 동일한 title인 페이지 다수
+
+사이트 내 여러 페이지가 **동일한 title**을 가지면:
+- 검색로봇이 어떤 페이지가 title에 가장 적합한지 분석 필요
+- 어떤 페이지를 검색결과로 노출해야 할지 **불명확**
+
+> 각 페이지마다 **고유한** \`<title>\`을 작성하자.
+
+### title 텍스트 길이
+
+제목을 **매우 긴 텍스트**로 작성하는 것은 옳지 않다. 간결하고 명확하게.
+
+## 2. \`<meta name="description">\`
+
+### description 누락
+
+meta description은 페이지 내용을 요약하여 제공한다. 검색결과의 **스니펫**으로도 사용되니 각 페이지마다 요약 내용을 입력하자.
+
+\`\`\`html
+<head>
+  <meta name="description" content="네이버 서치어드바이저의 SEO 기본 가이드. title, description, H1, Alt 속성 최적화 방법을 안내합니다.">
+</head>
+\`\`\`
+
+### 동일한 description 다수
+
+여러 페이지에 **동일한 meta description**이 있으면:
+- 네이버 검색로봇이 **유의미하지 않은 내용**으로 판단하거나
+- **중복된 문서**로 분류하여 노출에 영향
+
+> title과 마찬가지로 각 페이지마다 **고유한** description을 작성하자.
+
+## 3. \`<H1>\` 요소
+
+\`<H1>\`은 페이지 콘텐츠를 나타내는 소제목으로 사용된다. HTML 문서에서 **2개 이상 발견되면** 네이버 검색로봇이 이해하기 어려운 구조가 된다.
+
+\`\`\`html
+<!-- 나쁜 예 — H1이 2개 -->
+<h1>SEO 가이드</h1>
+<h1>검색 최적화 방법</h1>
+
+<!-- 좋은 예 — H1은 1개만 -->
+<h1>SEO 기본 가이드: 검색 최적화 방법</h1>
+<h2>검색 친화적 URL</h2>
+<h2>메타태그 최적화</h2>
+\`\`\`
+
+> Google은 H1 개수에 관대하지만, **네이버는 H1을 1개만 사용하는 것을 권장**한다.
+
+## 4. Alt 속성
+
+콘텐츠 이미지에 **설명(Alt) 속성**이 있으면 네이버 검색로봇이 이해하기 좋은 구조다. 페이지 콘텐츠와 이미지에 대한 주제를 잘 해석할 수 있다.
+
+\`\`\`html
+<!-- 나쁜 예 — Alt 속성 누락 -->
+<img src="product.jpg">
+
+<!-- 좋은 예 — 이미지를 설명하는 Alt -->
+<img src="product.jpg" alt="네이버 SEO 가이드 인포그래픽">
+\`\`\`
+
+## Next.js에서의 적용
+
+### Metadata API로 title/description 관리
+
+\`\`\`typescript
+// app/layout.tsx — 루트 레이아웃
+export const metadata: Metadata = {
+  title: {
+    default: "사이트명",
+    template: "%s | 사이트명",  // 각 페이지 고유 title 자동 생성
+  },
+  description: "사이트 기본 설명",
+};
+
+// app/blog/page.tsx — 개별 페이지
+export const metadata: Metadata = {
+  title: "블로그",  // → "블로그 | 사이트명"
+  description: "웹 개발 블로그 — 고유한 설명",
+};
+\`\`\`
+
+### H1은 페이지당 1개
+
+\`\`\`typescript
+export default function BlogPage() {
+  return (
+    <>
+      <h1>블로그</h1>          {/* H1은 1개만 */}
+      <h2>최신 글</h2>          {/* 하위 제목은 H2 */}
+      <h2>카테고리별</h2>
+    </>
+  );
+}
+\`\`\`
+
+### next/image로 Alt 필수 적용
+
+\`\`\`typescript
+import Image from "next/image";
+
+<Image
+  src="/hero.jpg"
+  alt="SEO 최적화 프로세스 다이어그램"  // Alt 필수
+  width={1200}
+  height={630}
+/>
+\`\`\`
+
+## 네이버 vs Google 차이점
+
+| 항목 | 네이버 | Google |
+|------|--------|--------|
+| **H1 개수** | 1개만 권장 | 여러 개도 괜찮음 |
+| **meta keywords** | 참고 가능 | 완전 무시 |
+| **title 중복** | 노출에 직접 영향 | Search Console 경고 |
+| **description 중복** | 중복 문서로 분류 가능 | 자동으로 다른 스니펫 생성 |
+
+## 핵심 체크리스트
+
+- [ ] 모든 페이지에 고유한 \`<title>\` (1개만)
+- [ ] 모든 페이지에 고유한 \`<meta description>\`
+- [ ] 페이지당 \`<h1>\` 1개만 사용
+- [ ] 콘텐츠 이미지에 \`alt\` 속성 작성
+- [ ] title 길이 적절하게 유지 (너무 길지 않게)
+`,
+  },
+  {
+    slug: "naver-indexing-efficiency-guide",
+    title: "사이트 색인 효율성 개선하기 (네이버 서치어드바이저 정리)",
+    description:
+      "네이버 서치어드바이저 공식 가이드 정리. 불용문서 판단 기준, 소프트 404 문제, HTTP 응답코드 올바른 설정법으로 색인 효율성을 개선하는 방법.",
+    category: "local-seo",
+    tags: ["네이버", "색인", "404", "HTTP응답코드", "불용문서", "서치어드바이저"],
+    createdAt: "2026-03-18",
+    updatedAt: "2026-03-18",
+    content: `## 개요
+
+네이버 서치어드바이저의 "사이트의 색인 효율성 개선하기" 공식 가이드를 정리한 글이다. 네이버 검색로봇이 수집한 문서가 모두 색인되는 것은 아니며, **불용문서**로 판단되면 색인에서 제외된다.
+
+## 불용문서란?
+
+수집된 문서 중 **색인에 불필요하다고 판단**되는 문서. 대표적인 케이스:
+
+### 1. HTML 내용이 없는 경우
+
+네이버 검색로봇은 웹페이지를 **최신 웹 브라우저와 동일한 모습**으로 렌더링하여 해석한다.
+
+일부 페이지가 HTML 마크업 없이 **순수 JavaScript로만 페이지를 이동**하는 경우:
+- 검색로봇이 제대로 해석할 수 없음
+- **내용이 없는 웹페이지**로 간주
+- 색인에서 제외
+
+\`\`\`html
+<!-- 나쁜 예 — JavaScript로만 이동 처리 -->
+<html>
+<body>
+<script>
+  window.location.href = "https://www.mysite.com/new-page";
+</script>
+</body>
+</html>
+\`\`\`
+
+> 페이지 이동은 JavaScript가 아닌 **HTTP 응답코드 301 또는 302 방식**으로 처리하자.
+
+### 2. 소프트 404 (Soft 404 / Soft Dead)
+
+사이트 구축/운영 시 오류 페이지의 **올바른 HTTP 응답코드**를 유지하는 것이 매우 중요하다.
+
+## HTTP 응답코드 올바른 설정
+
+### 오류 상황별 응답코드
+
+| 상황 | 올바른 응답코드 |
+|------|---------------|
+| 자료 없음, URL 잘못 입력, 옛날 URL | **404** (Not Found) |
+| 로그인 사용자만 접근 가능 | **403** (Forbidden) |
+| 사이트가 다른 도메인으로 이전 | **301** (Moved Permanently) |
+| 사이트 점검 중 | **503** (Service Unavailable) |
+| 웹 호스팅 기한 만료 | **503** (Service Unavailable) |
+
+### 소프트 404의 문제
+
+위 오류 상황에서 **HTTP 200(OK)**을 반환하면:
+
+1. 검색로봇이 **정상 콘텐츠로 인식** → 수집 후 색인 대상으로 전달
+2. 색인 과정에서 불용문서로 검출되면 자연스럽게 제외되지만...
+3. 간혹 **불용문서로 인식 못 해 검색에 노출**되는 경우 발생
+4. 해당 콘텐츠는 사용자에게 아무런 도움이 되지 않음
+5. **사이트의 신뢰성에 좋지 않은 영향**
+
+\`\`\`
+# 나쁜 예 — 404 페이지인데 200 OK 반환 (소프트 404)
+GET /deleted-page HTTP/1.1
+HTTP/1.1 200 OK
+<html><body>페이지를 찾을 수 없습니다</body></html>
+
+# 좋은 예 — 실제 404 상태코드 반환
+GET /deleted-page HTTP/1.1
+HTTP/1.1 404 Not Found
+<html><body>페이지를 찾을 수 없습니다</body></html>
+\`\`\`
+
+## Next.js에서의 적용
+
+### 올바른 404 처리
+
+\`\`\`typescript
+// app/not-found.tsx — Next.js가 자동으로 404 상태코드 반환
+export default function NotFound() {
+  return (
+    <div>
+      <h1>페이지를 찾을 수 없습니다</h1>
+      <p>요청하신 페이지가 존재하지 않습니다.</p>
+    </div>
+  );
+}
+\`\`\`
+
+\`\`\`typescript
+// app/articles/[slug]/page.tsx — 존재하지 않는 글
+import { notFound } from "next/navigation";
+
+export default function ArticlePage({ params }) {
+  const article = getArticleBySlug(params.slug);
+  if (!article) notFound();  // 자동으로 404 상태코드 + not-found.tsx 렌더링
+  return <article>...</article>;
+}
+\`\`\`
+
+### 올바른 리디렉션
+
+\`\`\`typescript
+// next.config.ts — 영구 이전
+const nextConfig = {
+  async redirects() {
+    return [
+      {
+        source: "/old-page",
+        destination: "/new-page",
+        permanent: true,  // 301 Moved Permanently
+      },
+    ];
+  },
+};
+\`\`\`
+
+### 점검 모드
+
+\`\`\`typescript
+// middleware.ts — 사이트 점검 시 503 반환
+import { NextResponse } from "next/server";
+
+export function middleware() {
+  if (process.env.MAINTENANCE_MODE === "true") {
+    return new NextResponse("점검 중입니다", { status: 503 });
+  }
+}
+\`\`\`
+
+## 핵심 요약
+
+| 문제 | 원인 | 해결 |
+|------|------|------|
+| **HTML 없는 페이지** | JS로만 이동 처리 | 301/302 리디렉션 사용 |
+| **소프트 404** | 오류 페이지에 200 OK 반환 | 올바른 HTTP 상태코드 설정 |
+| **색인 품질 저하** | 불용문서가 검색에 노출 | 오류 페이지에 적절한 응답코드 |
+| **신뢰성 하락** | 의미 없는 페이지 노출 | 404, 403, 503 정확히 사용 |
+`,
+  },
+  {
+    slug: "naver-seo-friendly-url-guide",
+    title: "검색 친화적인 URL 구축하기 (네이버 서치어드바이저 정리)",
+    description:
+      "네이버 서치어드바이저 공식 가이드 정리. URL 구조, 검색 친화적 URL/링크 설계, fragment/해시뱅 금지, 파라미터 최소화, 정적 링크 마크업 권장.",
+    category: "local-seo",
+    tags: ["네이버", "URL", "SEO", "링크", "서치어드바이저", "permalink"],
+    createdAt: "2026-03-18",
+    updatedAt: "2026-03-18",
+    content: `## 개요
+
+네이버 서치어드바이저의 "검색 친화적인 URL 구축하기" 공식 가이드를 정리한 글이다. URL 구조는 사이트를 **처음 구축할 시점에서** 고려해야 하며, 콘텐츠 분류에 맞게 이해하기 쉬운 구조로 구성하는 것이 핵심이다.
+
+\`\`\`
+# 나쁜 URL — 의미를 파악할 수 없음
+https://www.mysite.com/1001125/1079/action.do?tab=guide&method=selectPage&menu_id=EMWPCnslWebInqL
+
+# 좋은 URL — 사용자와 검색로봇 모두 쉽게 이해
+https://www.mysite.com/guide/creator
+\`\`\`
+
+## URL 구조 이해
+
+URL의 각 구성 요소를 이해하자:
+
+\`\`\`
+https://search.naver.com/search.naver?query=naver&page=2&where=web#section
+\`\`\`
+
+| 구성 요소 | 예시 | 설명 |
+|----------|------|------|
+| **프로토콜** | \`https\` | 보안이 강화된 HTTPS 사용 권장 |
+| **호스트** | \`search.naver.com\` | 콘텐츠 제공 서버. 가독성 좋은 단어 선택 |
+| **도메인** | \`.naver.com\` | 사이트 성격과 일치하는 독립 도메인 권장 |
+| **경로/파일명** | \`/search.naver\` | 웹서버 자원 경로. 통상 소문자 사용 |
+| **매개변수** | \`query=naver&page=2\` | 키=값 쌍, &로 구분 |
+| **fragment** | \`#section\` | 페이지 내 특정 부분 지칭 (검색엔진은 해석 안 함) |
+
+## 검색 친화적인 URL 규칙
+
+### 1. 친숙한 최상위 도메인 사용
+
+\`\`\`
+# 권장 도메인
+.com, .net, .co.kr, .kr, .io
+
+# 나쁜 예 — 호스팅 서비스 기본 도메인
+mysite.web-hosting.com
+
+# 좋은 예 — 고유 도메인
+www.mysite.com
+\`\`\`
+
+### 2. URL 파라미터 최소화
+
+\`\`\`
+# 좋은 URL — 깔끔한 경로
+https://www.mysite.com/guide/seo-basic-intro
+
+# 나쁜 URL — 불필요한 파라미터
+https://www.mysite.com/guide.php?page=seo-basic-intro&sort=default
+\`\`\`
+
+### 3. fragment(#) / 해시뱅(#!) 사용 금지
+
+**검색엔진은 fragment를 해석하지 않는다.** 콘텐츠 성격이 다른 페이지는 독립된 URL로 구축해야 한다.
+
+\`\`\`
+# 좋은 URL — 독립된 경로
+https://www.mysite.com/start
+https://www.mysite.com/diagnose
+
+# 나쁜 URL — fragment 사용 (검색엔진이 구분 못 함)
+https://www.mysite.com/?tab=guide#start
+https://www.mysite.com/?tab=guide#diagnose
+\`\`\`
+
+해시뱅(#!)도 마찬가지:
+
+\`\`\`
+# 나쁜 URL — 검색엔진은 /path/to/ 까지만 인식
+https://www.mysite.com/path/to/#!/some-ajax-state
+\`\`\`
+
+## 검색 친화적인 링크
+
+네이버 검색로봇은 웹 페이지 내 링크를 추출하여 **수집 대상 URL 후보군**으로 처리한다. 링크를 검색로봇이 해석하기 쉽게 마크업하는 것이 중요하다.
+
+### 반드시 \`<a href>\` 태그 사용
+
+\`\`\`html
+<!-- 좋은 예 — 검색로봇이 URL을 정확히 파악 가능 -->
+<a href="http://www.mysite.com">Link</a>
+
+<!-- 나쁜 예 — 검색로봇이 URL을 파악할 수 없음 -->
+<span onClick="javascript:goto(A)">Link</span>
+\`\`\`
+
+JavaScript 함수로만 링크를 처리하면, 검색로봇이 **어떤 URL인지 파악할 수 없어** 사이트 내부의 다른 좋은 정보들을 찾아갈 수 없다.
+
+### 정적 링크 마크업 권장
+
+동적으로 링크가 변경되면 검색로봇이 해석하기 어렵다. 가급적 **정적으로 마크업** 처리하자.
+
+#### 피해야 할 패턴
+
+| 패턴 | 문제점 |
+|------|--------|
+| 세션/쿠키에 따라 링크 URL이 동적 변경 | 크롤러마다 다른 URL을 보게 됨 |
+| 직접 접근 vs 경유 접근 시 링크 URL 변경 | 일관된 URL 수집 불가 |
+| JavaScript로만 링크 처리 | 크롤러가 URL 자체를 인식 못 함 |
+
+## Next.js에서의 실전 적용
+
+Next.js App Router는 이 가이드의 권장사항을 자연스럽게 따른다:
+
+### 디렉토리 기반 라우팅 = 검색 친화적 URL
+
+\`\`\`
+app/
+├── page.tsx                    → /
+├── guide/
+│   ├── page.tsx                → /guide
+│   └── seo-basic-intro/
+│       └── page.tsx            → /guide/seo-basic-intro
+├── products/
+│   └── [slug]/
+│       └── page.tsx            → /products/running-shoes
+\`\`\`
+
+파라미터 없이 **깔끔한 permalink**가 자동 생성된다.
+
+### Link 컴포넌트 = 검색 친화적 링크
+
+\`\`\`typescript
+import Link from "next/link";
+
+// Next.js Link는 내부적으로 <a href>를 렌더링 → 검색로봇 친화적
+<Link href="/guide/seo-basic-intro">SEO 기본 가이드</Link>
+
+// 절대 이렇게 하지 말 것
+<button onClick={() => router.push("/guide")}>가이드</button>
+\`\`\`
+
+### HTTPS 기본 적용
+
+Vercel 배포 시 HTTPS가 **기본 적용**되므로 별도 설정이 필요 없다.
+
+## 핵심 요약
+
+| 항목 | 권장 | 비권장 |
+|------|------|--------|
+| **도메인** | 고유 도메인 (.com, .kr 등) | 호스팅 기본 도메인 |
+| **URL 구조** | 의미 있는 경로 (\`/guide/creator\`) | 파라미터 범벅 (\`?tab=guide&method=...\`) |
+| **파라미터** | 최소화 | 불필요한 파라미터 다수 |
+| **fragment** | 사용 금지 (permalink로 대체) | \`#start\`, \`#!/faq\` |
+| **링크** | \`<a href>\` 정적 마크업 | \`onClick\` JavaScript 함수 |
+| **프로토콜** | HTTPS | HTTP |
+| **대소문자** | 소문자 통일 | 대소문자 혼용 |
+`,
+  },
+  {
     slug: "naver-javascript-seo-guide",
     title: "네이버 자바스크립트 검색 최적화 가이드 (서치어드바이저 정리)",
     description:
